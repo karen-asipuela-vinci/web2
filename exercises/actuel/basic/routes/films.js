@@ -1,7 +1,10 @@
 var express = require('express');
+const { serialize, parse } = require('../utils/json');
 var router = express.Router();
 
-const films = [
+const jsonDbPath = __dirname + '/../data/films.json';
+
+const defaultFilms = [
   {
     id: 1,
     title: 'Star Wars: The Phantom Menace (Episode I)',
@@ -33,6 +36,8 @@ router.get('/', (req, res) => {
   if (typeof minimumFilmDuration !== 'number' || minimumFilmDuration <= 0)
     return res.sendStatus(400);
 
+  const films = parse(jsonDbPath, defaultFilms);
+
   if (!minimumFilmDuration) return res.json(films);
 
   const filmsReachingMinimumDuration = films.filter(
@@ -43,6 +48,8 @@ router.get('/', (req, res) => {
 
 // Read a film from its id in the menu
 router.get('/:id', (req, res) => {
+  const films = parse(jsonDbPath, defaultFilms);
+
   const indexOfFilmFound = films.findIndex((film) => film.id == req.params.id);
 
   if (indexOfFilmFound < 0) return res.sendStatus(404);
@@ -67,6 +74,8 @@ router.post('/', (req, res) => {
 
   if (!title || !link || !duration || !budget) return res.sendStatus(400);
 
+  const films = parse(jsonDbPath, defaultFilms);
+
   const existingFilm = films.find(
     (film) => film.title.toLowerCase() === title.toLowerCase()
   );
@@ -80,17 +89,23 @@ router.post('/', (req, res) => {
 
   films.push(newFilm);
 
+  serialize(jsonDbPath, films);
+
   return res.json(newFilm);
 });
 
 // Delete a film
 router.delete('/:id', function (req, res) {
+  const films = parse(jsonDbPath, defaultFilms);
+
   const indexOfFilmFound = films.findIndex((film) => film.id == req.params.id);
 
   if (indexOfFilmFound < 0) return res.sendStatus(404);
 
   const itemsRemoved = films.splice(indexOfFilmFound, 1);
   const itemRemoved = itemsRemoved[0];
+
+  serialize(jsonDbPath, films);
 
   return res.json(itemRemoved);
 });
@@ -111,6 +126,8 @@ router.patch('/:id', function (req, res) {
   )
     return res.sendStatus(400);
 
+  const films = parse(jsonDbPath, defaultFilms);
+
   const indexOfFilmFound = films.findIndex((film) => film.id == req.params.id);
 
   if (indexOfFilmFound < 0) return res.sendStatus(404);
@@ -124,6 +141,8 @@ router.patch('/:id', function (req, res) {
   };
 
   films[indexOfFilmFound] = updatedFilm;
+
+  serialize(jsonDbPath, films);
 
   return res.json(updatedFilm);
 });
@@ -151,11 +170,13 @@ router.put('/:id', function (req, res) {
     return res.sendStatus(400);
 
   const id = req.params.id;
+  const films = parse(jsonDbPath, defaultFilms);
   const indexOfFilmFound = films.findIndex((film) => film.id == id);
 
   if (indexOfFilmFound < 0) {
     const newFilm = { id, title, link, duration, budget };
     films.push(newFilm);
+    serialize(jsonDbPath, films);
     return res.json(newFilm);
   }
 
@@ -168,6 +189,8 @@ router.put('/:id', function (req, res) {
   };
 
   films[indexOfFilmFound] = updatedFilm;
+
+  serialize(jsonDbPath, films);
 
   return res.json(updatedFilm);
 });
