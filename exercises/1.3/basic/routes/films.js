@@ -23,9 +23,8 @@ const LISTMOVIES = [
 ]
 
 
-/* GET home page. */
+/* Read all the films*/
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
   res.json(LISTMOVIES);
 });
 
